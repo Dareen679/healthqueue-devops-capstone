@@ -1,0 +1,11 @@
+# Software supply chain security and SLSA alignment
+
+The workflow tests Python code, builds a container, blocks known HIGH/CRITICAL vulnerabilities (where a fix exists), generates a CycloneDX SBOM, publishes a commit-SHA-tagged image to GHCR on main, and signs the pushed image digest using GitHub OIDC / keyless Cosign. The scan's `exit-code: 1` **fails the job** if policy violations are found; consequently push and sign do not execute. Findings without a fix are tolerated via `ignore-unfixed: true`: this is a documented security trade-off, and exceptions require risk review before real production use.
+
+**SLSA precision:** SLSA is about build provenance and integrity, not simply having scans or an SBOM. A GitHub-hosted workflow, source control, and tamper-evident signatures support a path toward SLSA build level 1, **but this repository does not yet generate and independently verify a compliant SLSA provenance attestation** and cannot claim level 1 or level 2 certification. To strengthen alignment, generate SLSA provenance using a dedicated trusted builder, pin external GitHub Actions by immutable SHA, publish provenance with the image digest, require policy verification in the deployment admission layer, and restrict who can change release workflows. For higher levels, assess isolation, hardened builder controls, and required provenance properties against the relevant framework version.
+
+Risks/trade-offs: GitHub Actions version tags are convenient but mutable; pin SHA versions after validation. Image scans see known published vulnerabilities, not novel zero-days or compromised credentials. Signing proves a digest was signed by an identified workflow identity, not that its code is safe. PR review, protected branches, least-privilege job permissions, package updates, and provenance verification are complementary.
+
+Evidence to capture: passed test run; passing Trivy output; sample deliberately vulnerable image failing the gate in a disposable branch (never merge); published SBOM artifact; signed GHCR image digest and `cosign verify` result; protected-branch settings.
+
+Primary references: https://slsa.dev/spec/v1.1/levels ; https://docs.sigstore.dev/cosign/signing/signing_with_blobs/ ; https://github.com/aquasecurity/trivy-action .

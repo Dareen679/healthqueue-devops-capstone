@@ -1,0 +1,7 @@
+.git
+.github
+.terraform
+__pycache__
+.pytest_cache
+*.tfstate*
+.venv

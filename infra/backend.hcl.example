@@ -1,0 +1,5 @@
+bucket = "REPLACE_EXISTING_UNIQUE_STATE_BUCKET"
+key = "healthqueue/demo/terraform.tfstate"
+region = "us-east-1"
+encrypt = true
+use_lockfile = true

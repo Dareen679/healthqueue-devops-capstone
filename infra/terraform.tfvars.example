@@ -1,0 +1,3 @@
+name_suffix = "replace-with-your-unique-suffix"
+aws_region = "us-east-1"
+environment = "demo"

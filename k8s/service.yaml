@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-api
+  namespace: healthqueue
+spec:
+  selector: {app: appointment-api}
+  ports: [{name: http, port: 80, targetPort: 8080}]
+  type: ClusterIP
