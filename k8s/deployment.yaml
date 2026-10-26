@@ -3,33 +3,64 @@ kind: Deployment
 metadata:
   name: appointment-api
   namespace: healthqueue
+
 spec:
   replicas: 2
   selector:
-    matchLabels: {app: appointment-api}
+    matchLabels:
+      app: appointment-api
+
   template:
     metadata:
-      labels: {app: appointment-api}
+      labels:
+        app: appointment-api
+
     spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+
       containers:
         - name: api
           image: ghcr.io/dareen679/healthqueue-devops-capstone:2e39b3d2bc411523f1fd6b48f2a106504807b14a
-          ports: [{containerPort: 8080}]
+
+          ports:
+            - containerPort: 8080
+
           readinessProbe:
-            httpGet: {path: /readyz, port: 8080}
+            httpGet:
+              path: /readyz
+              port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
+
           livenessProbe:
-            httpGet: {path: /healthz, port: 8080}
+            httpGet:
+              path: /healthz
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
+
           resources:
-            requests: {cpu: 50m, memory: 64Mi}
-            limits: {cpu: 250m, memory: 256Mi}
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            capabilities: {drop: [ALL]}
+            capabilities:
+              drop:
+                - ALL
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
