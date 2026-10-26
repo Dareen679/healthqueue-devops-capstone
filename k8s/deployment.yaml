@@ -16,7 +16,7 @@ spec:
         runAsUser: 10001
       containers:
         - name: api
-          image: ghcr.io/REPLACE_OWNER/REPLACE_REPO:REPLACE_COMMIT_SHA
+          image: ghcr.io/dareen679/healthqueue-devops-capstone:2e39b3d2bc411523f1fd6b48f2a106504807b14a
           ports: [{containerPort: 8080}]
           readinessProbe:
             httpGet: {path: /readyz, port: 8080}
