@@ -28,7 +28,7 @@ jobs:
       - name: Build local image for scanning
         run: docker build -t healthqueue:ci .
       - name: Scan image; block HIGH/CRITICAL
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: healthqueue:ci
           severity: HIGH,CRITICAL
