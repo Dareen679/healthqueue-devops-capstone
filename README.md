@@ -1,63 +1,90 @@
-# HealthQueue — DevOps Capstone Reference Architecture
+# HealthQueue | DevOps Capstone Portfolio
 
-A **repository-ready learning demonstration**, not a live or HIPAA-compliant appointment system. Designed for a CTO briefing; all data synthetic. Do not submit claims of verified infrastructure or running Argo CD until you personally test them and collect evidence.
+**A healthcare-inspired reference project showcasing automated delivery, infrastructure as code, Kubernetes, GitOps, and operational reliability.**
 
-## Contents
-- `app/`, `tests/`: Flask demonstration appointment API with validation and synthetic IDs
-- `.github/workflows/ci.yml`: test, image build, Trivy policy gate, SBOM, GHCR image, keyless signing
-- `infra/`: OpenTofu S3 audit bucket + DynamoDB, remote S3 state configuration
-- `k8s/`, `gitops/`: Kubernetes deployment/service, Argo CD GitOps application (templates)
-- `scripts/generate_dora.py`, `data/`: seeded synthetic 90-day deployment CSV and analysis
-- `docs/`: architecture/ADRs, SLSA assessment, monitoring/SLO budget, runbook, video outline
+> Portfolio demonstration with synthetic data. Designed as an educational architecture, not a live clinical service.
 
-## Local test
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-pytest -q
-python -m app.main
-# another terminal:
-curl http://127.0.0.1:8080/healthz
-curl -X POST http://127.0.0.1:8080/appointments -H 'Content-Type: application/json' -d '{"patient_ref":"synthetic-only","starts_at":"2026-11-04T15:00:00Z"}'
-python scripts/generate_dora.py
-```
+## Project Summary
+HealthQueue brings together the DevOps practices I developed in CST 365. The project organizes a healthcare appointment API reference workflow around source control, automated validation, containerization, infrastructure configuration, Kubernetes deployment manifests, and GitOps operations. It illustrates how an engineering team can develop a delivery process that emphasizes consistency, traceability, and maintainability.
 
-## GitHub preparation and scan/sign verification
-1. Create a new GitHub repository and push these files. In repo settings enable Actions and ensure `GITHUB_TOKEN` has permitted GHCR package publishing. Protect `main` by PR review and status checks.
-2. Show the **actual** workflow run, passing tests, Trivy results, and uploaded SBOM. A scan can fail due to newly published vulnerabilities. Resolve/record findings rather than suppressing them simply to pass.
-3. On `main` pushes, see the GHCR image tagged with the commit SHA and Cosign signing log. Inspect image digest and verify signing using `cosign verify --certificate-identity-regexp 'https://github.com/.+/.+/.github/workflows/ci.yml@refs/heads/main' --certificate-oidc-issuer https://token.actions.githubusercontent.com ghcr.io/OWNER/REPO@sha256:YOUR_DIGEST` (replace all placeholders; inspect certificate identity from your run).
-4. To deploy, edit `k8s/deployment.yaml` to your **actual** image location and immutable SHA tag. For stronger reproducibility/security, use the digest instead of a mutable tag. Open and merge a PR to promote the release.
+## Problem Statement
+A health-technology organization needs a way to evolve its appointment service while coordinating development, security, infrastructure, and operations. Untracked configuration changes and manual releases can make services difficult to maintain. HealthQueue addresses this design problem through version-controlled configuration and automation-oriented practices.
 
-## OpenTofu: AWS credentials, cost, and remote state
-1. An AWS account is needed; creating real resources can incur costs. Set a budget/cleanup plan. Never put credentials or patient details in Git.
-2. Create a **separate existing S3 bucket** for Terraform state with versioning, encryption, access restrictions and locking support. Copy `infra/backend.hcl.example` to `infra/backend.hcl` and replace placeholders. Remote state is not automatically provisioned by this project; it must exist first.
-3. `cd infra && tofu init -backend-config=backend.hcl && tofu fmt -check && tofu validate && tofu plan -var='name_suffix=YOUR_UNIQUE_SUFFIX'`.
-4. Review plan and optionally `tofu apply -var='name_suffix=YOUR_UNIQUE_SUFFIX'` in a demo account. Save and screenshot the plan / applied resources; use `tofu destroy` when finished. Do not destroy the separately bootstrapped state bucket before cleaning up.
+## Technologies Used
+| Area | Technologies / concepts |
+| --- | --- |
+| Source and automation | Git, GitHub, GitHub Actions, CI/CD |
+| Application and containerization | Python API, Docker, container registry concepts |
+| Infrastructure | OpenTofu, declarative resources, variables and outputs |
+| Orchestration and GitOps | Kubernetes manifests, Argo CD |
+| Security | Container hardening, secret-handling principles, vulnerability scanning concepts |
+| Reliability | Health checks, monitoring and observability planning, DORA/SLO concepts |
 
-## Kubernetes and Argo CD
-1. Use an existing authorized Kubernetes cluster with Argo CD installed, a kube context and adequate permissions.
-2. Update `gitops/application.yaml` with your actual GitHub URL, and change Kubernetes image placeholders.
-3. `kubectl apply -f gitops/application.yaml`, inspect Argo CD app `healthqueue` for **Synced** and **Healthy** and inspect pods `Ready`. Edit image via PR, merge and confirm reconciliation. Capture before/after evidence.
-4. This demonstration has no public ingress, TLS or authentication. Do not expose to real users. This project **does not yet automate image tag promotion**. Argo CD reconciliation is configured, not proven until tested.
+## Architecture Overview
 
-## What is and is not implemented
-**Locally checkable:** Python endpoints and tests, deterministic data generator, documents and configuration syntax. **Depends on your environment:** successful CI security gate, image push/sign, IaC deployment, Argo CD sync and Kubernetes app health. **Planned, not installed:** OpenTelemetry pipeline, Grafana, alert routing, automated supply-chain provenance verification, persistence/auth/security review. Present these honestly in the video.
+    Developer updates repository
+                |
+                v
+        GitHub source control
+                |
+                v
+        GitHub Actions CI/CD
+      (validation, build, checks)
+                |
+                v
+         Container image
+                |
+                v
+     Kubernetes configuration <---- Argo CD GitOps reconciliation
+                |
+                v
+     Appointment API / service
 
-## Sources
-- DORA: https://dora.dev/guides/dora-metrics-four-keys/ and https://dora.dev/research/2023/dora-report/
-- SLSA: https://slsa.dev/spec/v1.1/levels
-- Argo CD: https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/
-- OpenTofu: https://opentofu.org/docs/language/settings/backends/s3/
-- Kubernetes: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
-- Google SRE: https://sre.google/workbook/alerting-on-slos/
+OpenTofu defines supporting infrastructure resources.
+Health checks and SRE practices guide operational validation.
 
-## Submission checklist
-- [ ] Repository pushed and working CI run screenshotted
-- [ ] SBOM & signing evidence, explain Trivy fail behavior
-- [ ] `tofu plan`/apply evidence using remote state
-- [ ] Argo CD Synced/Healthy and pods Ready screenshot
-- [ ] DORA CSV, analysis, security and SRE docs
-- [ ] Diagram, ADRs, runbook and README
-- [ ] Camera-on 8–10 minute video recorded in your own words and uploaded through LMS
-- [ ] GitHub URL + all required deliverables submitted
+The diagram communicates the project's intended delivery design; the status of any individual automated step should be established from its actual run logs before describing it as successfully executed.
+
+## Key Design Decisions
+1. **Git-centered changes:** Treat the repository as the shared record for application and deployment configuration, making changes easier to review and explain.
+2. **Repeatable automation:** Use CI/CD configuration to structure checks and container-build work rather than relying entirely on manual steps.
+3. **Declarative infrastructure:** Represent required infrastructure using OpenTofu so that changes are documented and can be reviewed before application.
+4. **Kubernetes and GitOps:** Separate desired deployment configuration from operational reconciliation using manifests and Argo CD.
+5. **Security and reliability from the start:** Apply container hardening and health-check practices; avoid committing credentials or sensitive healthcare information.
+
+## Challenges and How I Approached Them
+Connecting CI/CD, containers, Kubernetes, and GitOps taught me to examine the whole delivery path rather than view each tool separately. I practiced interpreting build and deployment behavior, adjusting configuration, and troubleshooting Kubernetes workloads. These experiences improved my ability to approach technical challenges methodically, communicate design choices, and identify the evidence needed to assess a release.
+
+## Outcomes and Professional Skills Demonstrated
+- Organized multiple DevOps tools around one realistic health-tech use case.
+- Practiced source control and automation-oriented deployment workflows.
+- Developed familiarity with infrastructure-as-code and declarative Kubernetes configuration.
+- Applied security-conscious configuration and reliability concepts.
+- Strengthened technical documentation, problem solving, and communication skills.
+
+**Evidence standard:** Repository configuration demonstrates implementation work. Live operating status, security results, availability, and deployment performance are established by actual workflow logs, cluster status, and test outputs—not inferred from the presence of files.
+
+## Validation and Reproduction
+For a clean validation, review the current repository's application setup instructions and execute these checks in an authorized development environment:
+
+1. Run the application's documented tests and capture the results.
+2. Review GitHub Actions execution details for the latest commit.
+3. Validate OpenTofu configuration with `tofu fmt -check` and `tofu validate` after initialization (do not apply cloud resources without approved credentials and cost controls).
+4. Review Kubernetes manifests and verify workload health using `kubectl get pods -A` and relevant logs.
+5. Inspect Argo CD application status and check the deployed API's documented health endpoint.
+6. Record confirmed outcomes and screenshots in a future `docs/evidence/` folder.
+
+Do not include real patient information, cloud credentials, tokens, or private keys in this repository.
+
+## Next Iteration
+- Expand automated test coverage and strengthen CI checks.
+- Add a safe `.env.example` where configuration is required and document prerequisite credentials.
+- Record reproducible evidence of CI, container scanning, and deployment verification.
+- Explore staged promotions, rollback procedures, dashboards, and actionable alerts.
+- Use measured DORA and service-level indicators to evaluate improvement over time.
+
+## Career Connection
+HealthQueue highlights skills relevant to **entry-level DevOps, platform operations, and cloud support roles in health technology**. In an interview, I would walk through the architecture, explain the trade-offs of GitOps and IaC, describe my troubleshooting process, and discuss the operational checks I would use before promoting a change.
+
+## Course Learning Connection
+The project brings together CI/CD design, security, infrastructure automation, container orchestration, GitOps, and SRE principles introduced throughout CST 365. It reflects my growth from understanding individual tools to seeing how technical choices work together in a delivery lifecycle.
